@@ -31,3 +31,4 @@ class PerspectivePanel(QWidget):
         self.setLayout(self.layout)
         self.setMinimumWidth(960)
 
+

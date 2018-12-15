@@ -37,7 +37,7 @@ class Application(QApplication):
     window = None
 
     def __init__(self, argv):
-        super(Application, self).__init__(argv)
+        super().__init__(argv)
 
         # Create widgets
         self.window = Window()

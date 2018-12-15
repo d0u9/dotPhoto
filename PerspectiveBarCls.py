@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 
 class Indicator(QWidget):
     selected = False
@@ -71,10 +71,13 @@ class PerspectiveItem(QWidget):
     selectPalette = QPalette()
     unselectPalette = QPalette()
 
-    def __init__(self, size, title='None', selected=False):
+    clicked = pyqtSignal(object)
+
+    def __init__(self, size, title='None', idx=0, selected=False):
         super().__init__()
         self.size = size
         self.title = title
+        self.idx = idx
         self.selected = selected
         self.selectPalette.setColor(QPalette.Background, QColor.fromRgb(51,51,51))
         self.unselectPalette.setColor(QPalette.Background, QColor.fromRgba64(255,255,255,0))
@@ -104,30 +107,51 @@ class PerspectiveItem(QWidget):
     def Select(self):
         self.selected = True
         self.setPalette(self.selectPalette)
+        self.indicator.Select()
 
     def Unselect(self):
         self.selected = False
         self.setPalette(self.unselectPalette)
+        self.indicator.Unselect()
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        self.clicked.emit(self)
 
 
 class PerspectiveBar(QWidget):
     layout = None
     width = 55
 
-    basicPanel = None
+    basicPanelTab = None
+    currentPanelTab = None
 
-    def __init__(self):
+    def SelectPanel(self, panelTab):
+        self.currentPanelTab.Unselect()
+        panelTab.Select()
+        self.currentPanelTab = panelTab
+        self.perspectivePanelStack.setCurrentIndex(panelTab.idx)
+
+    def __init__(self, perspectivePanelStack):
         super().__init__()
+        self.perspectivePanelStack = perspectivePanelStack
 
         # Create widgets
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
-        self.basicPanel = PerspectiveItem(self.width, 'Basic', selected=True)
-        self.layout.addWidget(self.basicPanel)
+        self.basicPanelTab = PerspectiveItem(self.width, 'Basic', idx=0, selected=True)
+        self.currentPanelTab = self.basicPanelTab
+        self.basicPanelTab.clicked.connect(self.SelectPanel)
+        self.layout.addWidget(self.basicPanelTab)
+
+        self.TestPanelTab = PerspectiveItem(self.width, 'Test', idx=1)
+        self.TestPanelTab.clicked.connect(self.SelectPanel)
+        self.layout.addWidget(self.TestPanelTab)
 
         self.Setup()
+
 
     def Setup(self):
         self.layout.addStretch()

@@ -1,14 +1,14 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from PyQt5.QtGui import QPalette, QColor
 
 class InspectorPanel(QWidget):
     layout = None
 
     def __init__(self):
-        super(QWidget, self).__init__()
+        super().__init__()
 
         # Create widgets
-        self.layout = QHBoxLayout()
+        self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
@@ -24,5 +24,6 @@ class InspectorPanel(QWidget):
         self.setAutoFillBackground(True)
         self.setPalette(p)
 
-
+    def SetWidget(self, widget):
+        self.layout.addWidget(widget)
 
