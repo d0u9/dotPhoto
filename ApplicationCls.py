@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction
 
 import GlobalConfig as gConfig
+import DefaultStyleSheet as QSS
 from CentralWidgetCls import CentralWidget
 
 class Window(QMainWindow):
@@ -16,6 +17,7 @@ class Window(QMainWindow):
 
         helpMenu = self.menuBar().addMenu('Help')
         testToolBar = self.addToolBar('&Test')
+        testToolBar.setFixedHeight(39)
 
         aboutAction = helpMenu.addAction('About dotPhoto')
         aboutAction.setStatusTip('About ' + gConfig.appName)
@@ -49,6 +51,8 @@ class Application(QApplication):
         self.setOrganizationName('dot')
         self.setApplicationName('dotPhoto')
         self.setApplicationVersion('0.1')
+
+        self.setStyleSheet(QSS.defaultStyleSheet)
 
     def ShowAll(self):
         self.window.show()
