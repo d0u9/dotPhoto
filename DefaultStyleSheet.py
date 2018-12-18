@@ -33,6 +33,7 @@ defaultStyleSheet = """
         padding: 0 8px;
         background: rgb(35,35,35);
         selection-background-color: darkgray;
+        font-size: 12px;
     }
 
     QLineEdit:focus {
@@ -41,6 +42,7 @@ defaultStyleSheet = """
 
     QTreeView {
         background: rgb(35,35,35);
+        font-size: 12px;
     }
 
     QScrollBar, QScrollBar:add-line, QScrollBar:sub-line {
@@ -53,6 +55,12 @@ defaultStyleSheet = """
         border: 3px solid rgb(39,39,39);
         border-radius: 9px;
     }
+
+    QGraphicsView {
+        background: rgb(29,29,29);
+    }
+
+
 
 
 """

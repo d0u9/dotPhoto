@@ -28,7 +28,7 @@ class Window(QMainWindow):
         self.Setup()
 
     def Setup(self):
-        self.setGeometry(0, 0, 1200, 600)
+        self.setGeometry(0, 0, 1400, 800)
         self.setWindowTitle(gConfig.appName)
         self.setCentralWidget(self.centerWidget)
 

@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QLineEdit, QPushButton
-from PyQt5.QtCore import Qt, QDir, QStandardPaths
+from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize
 
 class FilePathBox(QWidget):
     prevBtn = None
@@ -22,13 +22,8 @@ class FilePathBox(QWidget):
         self.layout.addWidget(self.prevBtn)
 
         self.filePathInput = QLineEdit(self.currentPath)
-        self.filePathInput.setStyleSheet('margin: 0 10px 0 10px')
+        self.filePathInput.setStyleSheet('margin: 0 0 0 10px')
         self.layout.addWidget(self.filePathInput)
-
-        self.goToBtn = QPushButton('->')
-        self.goToBtn.setStyleSheet('width: 30px; height: 24px;')
-        self.layout.addWidget(self.goToBtn)
-
 
         self.setLayout(self.layout)
 
@@ -44,6 +39,8 @@ class FileExlpore(QWidget):
         self.currentPath = QStandardPaths.writableLocation(QStandardPaths.HomeLocation)
         self._fileModel = QFileSystemModel()
         self._fileModel.setRootPath(self.currentPath)
+        self._fileModel.setNameFilterDisables(False)
+        self._fileModel.setNameFilters(['*.jpg', '*.png'])
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
@@ -53,6 +50,7 @@ class FileExlpore(QWidget):
         self.layout.addWidget(self.filePathBox)
 
         self.fileTreeView = QTreeView()
+        self.fileTreeView.setIconSize(QSize(12, 12))
         self.fileTreeView.setModel(self._fileModel)
         self.fileTreeView.setHeaderHidden(True)
         header = self.fileTreeView.header()
