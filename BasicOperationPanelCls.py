@@ -1,12 +1,29 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QLineEdit, QPushButton
-from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize
+from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal
+
+class LineEdit(QLineEdit):
+    currentPath = None
+
+    canceled = pyqtSignal()
+
+    def __init__(self, currentPath):
+        super().__init__(currentPath)
+        self.currentPath = currentPath
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.setText(self.currentPath)
+        else:
+            super().keyPressEvent(event)
+
 
 class FilePathBox(QWidget):
-    prevBtn = None
-    goToBtn = None
+    upperBtn = None
     layout = None
     filePathInput = None
     currentPath = None
+
+    pathChanged = pyqtSignal(str)
 
     def __init__(self, currentPath='/'):
         super().__init__()
@@ -17,15 +34,31 @@ class FilePathBox(QWidget):
         self.layout.setAlignment(Qt.AlignVCenter)
         self.layout.setContentsMargins(0,8,0,8);
 
-        self.prevBtn = QPushButton('<-')
-        self.prevBtn.setStyleSheet('width: 30px; height: 24px;')
-        self.layout.addWidget(self.prevBtn)
+        self.upperBtn = QPushButton('<-')
+        self.upperBtn.setStyleSheet('width: 30px; height: 24px;')
+        self.upperBtn.clicked.connect(self.PrevBtnPressed)
+        self.layout.addWidget(self.upperBtn)
 
-        self.filePathInput = QLineEdit(self.currentPath)
+        self.filePathInput = LineEdit(self.currentPath)
         self.filePathInput.setStyleSheet('margin: 0 0 0 10px')
+        self.filePathInput.returnPressed.connect(self.Goto)
         self.layout.addWidget(self.filePathInput)
 
         self.setLayout(self.layout)
+
+    def Goto(self):
+        newPath = self.filePathInput.text()
+        if newPath == self.currentPath or not QDir(newPath).exists():
+            return
+        self.currentPath = newPath
+        self.pathChanged.emit(newPath)
+
+    def PrevBtnPressed(self):
+        d = QDir(self.currentPath)
+        if not d.cdUp():
+            return
+        self.filePathInput.setText(d.absolutePath())
+        self.Goto()
 
 class FileExlpore(QWidget):
     layout = None
@@ -47,6 +80,7 @@ class FileExlpore(QWidget):
         self.layout.setContentsMargins(0,0,0,0);
 
         self.filePathBox = FilePathBox(self.currentPath)
+        self.filePathBox.pathChanged.connect(self.SetNewPath)
         self.layout.addWidget(self.filePathBox)
 
         self.fileTreeView = QTreeView()
@@ -63,6 +97,11 @@ class FileExlpore(QWidget):
 
     def Setup(self):
         self.setLayout(self.layout)
+
+    def SetNewPath(self, newPath):
+        print(newPath)
+        self._fileModel.setRootPath(newPath)
+        self.fileTreeView.setRootIndex(self._fileModel.index(newPath))
 
 
 class BasicOperationPanel(QWidget):
