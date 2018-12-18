@@ -2,19 +2,60 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileS
 from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal
 
 class LineEdit(QLineEdit):
-    currentPath = None
-
     canceled = pyqtSignal()
+    commited = pyqtSignal(str)
 
     def __init__(self, currentPath):
         super().__init__(currentPath)
-        self.currentPath = currentPath
+        self.returnPressed.connect(self.ReturnPressed)
+
+    def ReturnPressed(self):
+        self.commited.emit(self.text())
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.setText(self.currentPath)
+            self.canceled.emit()
         else:
             super().keyPressEvent(event)
+
+
+class FileTreeView(QTreeView):
+    _model = None
+    currentPath = None
+
+    pathChanged = pyqtSignal(str)
+
+    def __init__(self, currentPath):
+        super().__init__()
+        self.currentPath = currentPath
+
+        self._model = QFileSystemModel()
+        self._model.setRootPath(self.currentPath)
+        self._model.setNameFilterDisables(False)
+        self._model.setNameFilters(['*.jpg', '*.png'])
+
+        self.Setup()
+
+    def Setup(self):
+        self.setExpandsOnDoubleClick(False)
+        self.setIconSize(QSize(12, 12))
+        self.setModel(self._model)
+        self.setHeaderHidden(True)
+        header = self.header()
+        for i in range(1, header.count()):
+            header.hideSection(i)
+        self.setRootIndex(self._model.index(self.currentPath))
+
+    def mouseDoubleClickEvent(self, event):
+        index = self.selectedIndexes()[0]
+        self.setRootIndex(index)
+        self.pathChanged.emit(self._model.filePath(index))
+
+    def SetPath(self, path):
+        self.currentPath = path
+        self._model.setRootPath(self.currentPath)
+        self.setRootIndex(self._model.index(self.currentPath))
+        self.selectionModel().clearSelection()
 
 
 class FilePathBox(QWidget):
@@ -36,72 +77,61 @@ class FilePathBox(QWidget):
 
         self.upperBtn = QPushButton('<-')
         self.upperBtn.setStyleSheet('width: 30px; height: 24px;')
-        self.upperBtn.clicked.connect(self.PrevBtnPressed)
         self.layout.addWidget(self.upperBtn)
 
         self.filePathInput = LineEdit(self.currentPath)
         self.filePathInput.setStyleSheet('margin: 0 0 0 10px')
-        self.filePathInput.returnPressed.connect(self.Goto)
         self.layout.addWidget(self.filePathInput)
 
         self.setLayout(self.layout)
 
-    def Goto(self):
-        newPath = self.filePathInput.text()
+        self.filePathInput.commited.connect(self.Goto)
+        self.filePathInput.canceled.connect(lambda : self.filePathInput.setText(self.currentPath))
+        self.upperBtn.clicked.connect(self.PrevBtnPressed)
+
+    def Goto(self, newPath):
         if newPath == self.currentPath or not QDir(newPath).exists():
-            return
-        self.currentPath = newPath
-        self.pathChanged.emit(newPath)
+            self.filePathInput.setText(self.currentPath)
+        else:
+            self.filePathInput.setText(newPath)
+            self.currentPath = newPath
+            self.pathChanged.emit(newPath)
 
     def PrevBtnPressed(self):
         d = QDir(self.currentPath)
-        if not d.cdUp():
-            return
-        self.filePathInput.setText(d.absolutePath())
-        self.Goto()
+        if d.cdUp():
+            self.Goto(d.absolutePath())
+
+    def SetPath(self, path):
+        self.currentPath = path
+        self.filePathInput.setText(path)
 
 class FileExlpore(QWidget):
     layout = None
     currentPath = None
     fileTreeView = None
-    _fileModel = None
 
     def __init__(self):
         super().__init__()
-
         self.currentPath = QStandardPaths.writableLocation(QStandardPaths.HomeLocation)
-        self._fileModel = QFileSystemModel()
-        self._fileModel.setRootPath(self.currentPath)
-        self._fileModel.setNameFilterDisables(False)
-        self._fileModel.setNameFilters(['*.jpg', '*.png'])
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
         self.filePathBox = FilePathBox(self.currentPath)
-        self.filePathBox.pathChanged.connect(self.SetNewPath)
         self.layout.addWidget(self.filePathBox)
 
-        self.fileTreeView = QTreeView()
-        self.fileTreeView.setIconSize(QSize(12, 12))
-        self.fileTreeView.setModel(self._fileModel)
-        self.fileTreeView.setHeaderHidden(True)
-        header = self.fileTreeView.header()
-        for i in range(1, header.count()):
-            header.hideSection(i)
-        self.fileTreeView.setRootIndex(self._fileModel.index(self.currentPath))
+        self.fileTreeView = FileTreeView(self.currentPath)
         self.layout.addWidget(self.fileTreeView)
+
+        self.filePathBox.pathChanged.connect(self.fileTreeView.SetPath)
+        self.fileTreeView.pathChanged.connect(self.filePathBox.SetPath)
 
         self.Setup()
 
     def Setup(self):
         self.setLayout(self.layout)
-
-    def SetNewPath(self, newPath):
-        print(newPath)
-        self._fileModel.setRootPath(newPath)
-        self.fileTreeView.setRootIndex(self._fileModel.index(newPath))
 
 
 class BasicOperationPanel(QWidget):

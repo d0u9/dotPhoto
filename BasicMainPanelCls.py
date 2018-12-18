@@ -33,7 +33,7 @@ class BasicMainPanel(QWidget):
         self.layout.setContentsMargins(0,0,0,0);
 
         self.picCanvas = PicCanvas()
-        self.layout.addWidget(self.picCanvas)
+        #  self.layout.addWidget(self.picCanvas)
 
 
         self.Setup()
