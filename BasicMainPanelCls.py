@@ -50,7 +50,6 @@ class PicCanvas(QGraphicsView):
 
     def Setup(self):
         self.setScene(self.scene)
-        self.setStyleSheet('background-color: blue')
 
     def resizeEvent(self, event):
         print('resize')
@@ -88,8 +87,23 @@ class PicCanvas(QGraphicsView):
             self._numScheduledScalings += 1;
 
 
+class QuickOpsPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setMaximumHeight(120)
+        self.setMinimumHeight(120)
+
+        p = QPalette()
+        p.setColor(QPalette.Background, QColor.fromRgb(38,38,38))
+        self.setAutoFillBackground(True)
+        self.setPalette(p)
+
+
 class BasicMainPanel(QWidget):
     layout = None
+    picCanvas = None
+    opsPanel = None
 
     def __init__(self):
         super().__init__()
@@ -99,20 +113,14 @@ class BasicMainPanel(QWidget):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
-        self.hlayout = QHBoxLayout()
-        self.hlayout.setSpacing(0)
-        self.hlayout.setContentsMargins(0,0,0,0);
-
         self.picCanvas = PicCanvas()
-
-        self.hlayout.addStretch()
-        self.hlayout.addWidget(self.picCanvas)
-        self.hlayout.addStretch()
+        self.opsPanel = QuickOpsPanel()
 
         self.layout.addStretch()
-        self.layout.addLayout(self.hlayout)
+        self.layout.addWidget(self.picCanvas)
+        self.layout.addSpacing(10)
+        self.layout.addWidget(self.opsPanel)
         self.layout.addStretch()
-
 
         self.Setup()
 

@@ -42,6 +42,10 @@ defaultStyleSheet = """
         border: 3px solid rgb(54,100,136);
     }
 
+    QLineEdit:read-only {
+        background: rgb(105,105,105);
+    }
+
     QTreeView {
         background: rgb(35,35,35);
         font-size: 12px;
@@ -62,9 +66,17 @@ defaultStyleSheet = """
         background: rgb(29,29,29);
     }
 
+    QCheckBox {
+        spacing: 6px;
+    }
 
-    WorkDirPathBox {
-        height: 36px;
+    QCheckBox::indicator {
+        width: 12px;
+        height: 12px;
+    }
+
+    QCheckBox::indicator:unchecked {
+        background: rgb(84,84,84);
     }
 
 
