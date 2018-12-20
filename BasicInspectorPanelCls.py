@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSizePolicy, QGroupBox, QHBoxLayout, QScrollArea
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QSizePolicy, QGroupBox, QHBoxLayout, QScrollArea, QLayout
 from PyQt5.QtGui import QPalette, QColor
 
 import exifread
@@ -72,14 +72,20 @@ class ExifBox(QGroupBox):
 
         self.table = ExifTable()
 
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(5,10,5,10);
+        layout.setSizeConstraint(QLayout.SetMinAndMaxSize)
+
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidget(self.table)
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setMinimumHeight(300)
-        self.scrollArea.setMaximumHeight(450)
+        self.scrollArea.setMinimumHeight(400)
+        self.scrollArea.setMaximumHeight(400)
+        self.scrollArea.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
         layout.addWidget(self.scrollArea)
+        layout.addStretch()
 
         self.setLayout(layout)
 
