@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QLineEdit, QPushButton
-from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal, QFileInfo
+from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal, QFileInfo, QFile
 
 import GlobalVar as gVar
 
@@ -8,6 +8,7 @@ class FileTreeView(QTreeView):
     currentPath = None
 
     pathChanged = pyqtSignal()
+    fileSelected = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -17,6 +18,8 @@ class FileTreeView(QTreeView):
         self._model.setFilter(QDir.AllEntries | QDir.NoDot | QDir.AllDirs)
         self._model.setNameFilterDisables(False)
         self._model.setNameFilters(['*.jpg', '*.png'])
+
+        self.clicked.connect(self.ClickedEvent)
 
         self.Setup()
 
@@ -33,9 +36,21 @@ class FileTreeView(QTreeView):
     def mouseDoubleClickEvent(self, event):
         index = self.selectedIndexes()[0]
         finfo = QFileInfo(self._model.filePath(index))
-        gVar.cwd = finfo.absoluteFilePath()
-        self.PathChangedEvent()
-        self.pathChanged.emit()
+        if finfo.isDir():
+            gVar.cwd = finfo.absoluteFilePath()
+            self.PathChangedEvent()
+            self.pathChanged.emit()
+
+    def ClickedEvent(self, event):
+        validSuffix = ['jpg', 'png']
+        index = self.selectedIndexes()[0]
+        finfo = QFileInfo(self._model.filePath(index))
+
+        if finfo.suffix().lower() not in validSuffix:
+            return
+
+        if finfo.isFile() and finfo.isReadable():
+            self.fileSelected.emit(finfo.absoluteFilePath())
 
     def PathChangedEvent(self):
         self._model.setRootPath(gVar.cwd)
@@ -48,6 +63,7 @@ class FileExlpore(QWidget):
     fileTreeView = None
 
     pathChanged = pyqtSignal()
+    fileSelected = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -60,7 +76,9 @@ class FileExlpore(QWidget):
 
         self.fileTreeView = FileTreeView()
         self.fileTreeView.setMaximumHeight(300)
+
         self.fileTreeView.pathChanged.connect(lambda : self.pathChanged.emit())
+        self.fileTreeView.fileSelected.connect(lambda x: self.fileSelected.emit(x))
 
         self.layout.addWidget(self.fileTreeView)
         self.layout.addStretch()
