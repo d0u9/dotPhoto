@@ -7,6 +7,7 @@ defaultStyleSheet = """
         background: rgb(65,65,65);
         border: none;
         spacing: 3px; /* spacing between items in the tool bar */
+        height: 55px;
     }
 
     QToolBar::handle {
@@ -27,13 +28,14 @@ defaultStyleSheet = """
     }
 
     QLineEdit {
-        height: 20px;
         border: 3px solid rgb(255,255,255,0%);
-        border-radius: 3px;
-        padding: 0 8px;
+        border-radius: 5px;
+        border-style: outset;
+        padding: 0 6px 0 6px;
         background: rgb(35,35,35);
         selection-background-color: darkgray;
         font-size: 12px;
+        qproperty-frame: false;
     }
 
     QLineEdit:focus {
@@ -61,6 +63,9 @@ defaultStyleSheet = """
     }
 
 
+    WorkDirPathBox {
+        height: 36px;
+    }
 
 
 """

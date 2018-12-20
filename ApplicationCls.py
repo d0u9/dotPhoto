@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction
 
-import GlobalConfig as gConfig
+import GlobalVar as gVar
 import DefaultStyleSheet as QSS
 from CentralWidgetCls import CentralWidget
 
@@ -16,20 +16,18 @@ class Window(QMainWindow):
         self.centerWidget = CentralWidget()
 
         helpMenu = self.menuBar().addMenu('Help')
-        testToolBar = self.addToolBar('&Test')
-        testToolBar.setFixedHeight(39)
 
         aboutAction = helpMenu.addAction('About dotPhoto')
-        aboutAction.setStatusTip('About ' + gConfig.appName)
+        aboutAction.setStatusTip('About ' + gVar.appName)
         aboutAction.setMenuRole(QAction.ApplicationSpecificRole);
         aboutAction.triggered.connect(lambda x: print("Hello World"))
-        testToolBar.addAction(aboutAction)
+        #  testToolBar.addAction(aboutAction)
 
         self.Setup()
 
     def Setup(self):
-        self.setGeometry(0, 0, 1400, 800)
-        self.setWindowTitle(gConfig.appName)
+        self.setGeometry(33, 66, 1400, 800)
+        self.setWindowTitle(gVar.appName)
         self.setCentralWidget(self.centerWidget)
 
     def ShowAll(self):

@@ -1,11 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QStackedWidget
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QStackedWidget
 
 from PerspectiveBarCls import PerspectiveBar
 from PerspectivePanelCls import PerspectivePanel
 from BasicPerspectivePanelCls import BasicPerspectivePanel
+from ToolBarCls import ToolBar
 
 class CentralWidget(QWidget):
     layout = None
+    toolbar = None
     perspectiveBar = None
     PerspectivePanel = None
 
@@ -29,10 +31,19 @@ class CentralWidget(QWidget):
         self.layout.addWidget(self.perspectiveBar)
         self.layout.addWidget(self.perspectivePanelStack)
 
+        self.toolBar = ToolBar()
+
+        self.hlayout = QVBoxLayout()
+        self.hlayout.setSpacing(0)
+        self.hlayout.setContentsMargins(0,0,0,0);
+        self.hlayout.addWidget(self.toolBar)
+        self.hlayout.addLayout(self.layout)
+
+
         self.Setup()
 
     def Setup(self):
-        self.setLayout(self.layout)
+        self.setLayout(self.hlayout)
 
 
 
