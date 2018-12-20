@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QCheckBox, QLabel, QLineEdit, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QCheckBox, QLabel, QLineEdit, QSizePolicy, QGroupBox
 from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal, QFileInfo, QFile
 
 import GlobalVar as gVar
@@ -58,14 +58,14 @@ class FileTreeView(QTreeView):
         self.selectionModel().clearSelection()
 
 
-class RawPathSetBox(QWidget):
+class RawPathSetBox(QGroupBox):
     layout = None
     checkBox = None
     suffixBox = None
     rawPathBox = None
 
     def __init__(self):
-        super().__init__()
+        super().__init__('Raw file location')
 
         layout0 = QHBoxLayout()
         layout0.setSpacing(0)
@@ -81,13 +81,13 @@ class RawPathSetBox(QWidget):
         self.checkBox.setCheckState(Qt.Checked)
         layout0.addWidget(self.checkBox)
 
-        label1 = QLabel('Raw suffix:')
+        label1 = QLabel('Suffix:')
         input1 = QLineEdit('CR2, DNG')
-        input1.setMinimumWidth(210)
-        label2 = QLabel('Raw path:')
+        input1.setMinimumWidth(225)
+        label2 = QLabel('Path:')
         input2 = QLineEdit(gVar.cwd)
         input2.setReadOnly(True)
-        input2.setMinimumWidth(210)
+        input2.setMinimumWidth(225)
 
         self.suffixBox = input1
         self.rawPathBox = input2
@@ -101,26 +101,25 @@ class RawPathSetBox(QWidget):
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0,0,0,0);
+        self.layout.setContentsMargins(5,10,5,10);
 
-        self.layout.addSpacing(10)
+        self.layout.addSpacing(5)
         self.layout.addLayout(layout0)
         self.layout.addSpacing(5)
         self.layout.addLayout(layout1)
         self.layout.addSpacing(5)
         self.layout.addLayout(layout2)
-        self.layout.addSpacing(10)
 
         self.setLayout(self.layout)
+        self.setContentsMargins(0,0,0,0)
 
     def CheckBoxChanged(self, state):
-        if state == Qt.Unchecked:
-            self.rawPathBox.setReadOnly(False)
+        if state == Qt.Unchecked: self.rawPathBox.setReadOnly(False)
         else:
             self.rawPathBox.setReadOnly(True)
 
 
-class FileExlpore(QWidget):
+class FileExlpore(QGroupBox):
     layout = None
     fileTreeView = None
 
@@ -128,13 +127,13 @@ class FileExlpore(QWidget):
     fileSelected = pyqtSignal(str)
 
     def __init__(self):
-        super().__init__()
+        super().__init__('File')
         gVar.fileExplorePathChangeEvent = self.PathChangedEvent
         gVar.fileExplore = self
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0,0,0,0);
+        self.layout.setContentsMargins(5,10,5,10);
 
         self.fileTreeView = FileTreeView()
 
@@ -148,6 +147,7 @@ class FileExlpore(QWidget):
     def Setup(self):
         self.setLayout(self.layout)
         self.setMaximumHeight(300)
+        self.setStyleSheet('padding-top: 15px')
 
     def PathChangedEvent(self):
         self.fileTreeView.PathChangedEvent()
@@ -173,9 +173,9 @@ class BasicOperationPanel(QWidget):
         lineWidget.setFixedHeight(1)
         lineWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         lineWidget.setStyleSheet('background: rgb(96,96,96)')
+        lineWidget.setContentsMargins(0,0,0,0)
 
         self.layout.addWidget(self.fileExplore)
-        self.layout.setSpacing(8)
         self.layout.addWidget(lineWidget)
         self.layout.addWidget(self.rawPathSetBox)
         self.layout.addStretch()

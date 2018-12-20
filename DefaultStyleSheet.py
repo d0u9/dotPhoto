@@ -80,4 +80,15 @@ defaultStyleSheet = """
     }
 
 
+    QScrollArea {
+        border: none;
+        background: rgb(38,38,38);
+        margin: 0;
+        padding: 0;
+    }
+
+    QWidget {
+        background-attachment: scroll;
+    }
+
 """

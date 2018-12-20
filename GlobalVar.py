@@ -23,11 +23,15 @@ workDirPathInputBoxPathChangeEvent = None
 fileExplorePathChangeEvent = None
 
 # BasicMainPanelCls.py
-ChangePhotoEvent = None
+imageViewImageSelectedEvent = None
+
+# BasicInspectorPanel
+exifBoxImageSelectedEvent = None
 
 
 def SignalConnection():
     workDirPathBox.pathChanged.connect  (fileExplorePathChangeEvent)
     fileExplore.pathChanged.connect     (workDirPathInputBoxPathChangeEvent)
-    fileExplore.fileSelected.connect    (ChangePhotoEvent)
+    fileExplore.fileSelected.connect    (imageViewImageSelectedEvent)
+    fileExplore.fileSelected.connect    (exifBoxImageSelectedEvent)
 

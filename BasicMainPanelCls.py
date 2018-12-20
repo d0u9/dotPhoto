@@ -10,12 +10,12 @@ class PicScene(QGraphicsScene):
 
     def __init__(self, parent):
         super().__init__(parent)
-        gVar.ChangePhotoEvent = self.ChangePhotoEvent
+        gVar.imageViewImageSelectedEvent = self.ImageSelectedEvent
 
         self.AddImageCenter('/Users/doug/Downloads/test2.JPG')
         self.addLine(0,0,100,100)
 
-    def ChangePhotoEvent(self, path):
+    def ImageSelectedEvent(self, path):
         self.AddImageCenter(path)
         self.update()
 
@@ -63,8 +63,8 @@ class PicCanvas(QGraphicsView):
         #  self.fitInView(0, 0, 2000, 2000)
 
     def wheelEvent(self, event):
-        print('wheel')
         numDegrees = event.angleDelta() / 8
+        print("wheel: {}".format(numDegrees))
         numSteps = numDegrees.y() / 15;
         self._numScheduledScalings += numSteps;
         if self._numScheduledScalings * numSteps < 0:
