@@ -1,61 +1,30 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QFileSystemModel, QCheckBox, QLabel, QLineEdit, QSizePolicy, QGroupBox
-from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal, QFileInfo, QFile
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTreeView, QGroupBox
+from PyQt5.QtWidgets import QFileSystemModel, QCheckBox, QLabel, QLineEdit, QSizePolicy
+from PyQt5.QtCore import Qt, QDir, QStandardPaths, QSize, pyqtSignal, QFileInfo, QFile, QDirIterator, QModelIndex, QRegExp
+from PyQt5.QtGui import QRegExpValidator, QIntValidator
 
 import GlobalVar as gVar
+from DirSelectWidgetCls import DirSelectWidget
 
-class FileTreeView(QTreeView):
-    _model = None
-    currentPath = None
-
-    pathChanged = pyqtSignal()
-    fileSelected = pyqtSignal(str)
+class RawFormatLineEdit(QLineEdit):
+    suffixChanged = pyqtSignal(str)
+    #  regx = '.*'
+    regx = '^\s*([A-Z0-9]+,\s*)+([A-Z0-9]+,?)\s*$'
+    validator = None
 
     def __init__(self):
-        super().__init__()
+        super().__init__(gVar.defaultRawSuffix)
 
-        self._model = QFileSystemModel()
-        self._model.setRootPath(gVar.cwd)
-        self._model.setFilter(QDir.AllEntries | QDir.NoDot | QDir.AllDirs)
-        self._model.setNameFilterDisables(False)
-        self._model.setNameFilters(['*.jpg', '*.png'])
+        self.validator = QRegExpValidator(QRegExp(self.regx, Qt.CaseInsensitive))
+        self.setValidator(self.validator)
 
-        self.clicked.connect(self.ClickedEvent)
+        self.returnPressed.connect(self.RawFormatUpdatedEvent)
 
-        self.Setup()
+    def focusOutEvent(self, event):
+        self.suffixChanged.emit(self.text())
 
-    def Setup(self):
-        self.setExpandsOnDoubleClick(False)
-        self.setIconSize(QSize(12, 12))
-        self.setModel(self._model)
-        self.setHeaderHidden(True)
-        header = self.header()
-        for i in range(1, header.count()):
-            header.hideSection(i)
-        self.setRootIndex(self._model.index(gVar.cwd))
-
-    def mouseDoubleClickEvent(self, event):
-        index = self.selectedIndexes()[0]
-        finfo = QFileInfo(self._model.filePath(index))
-        if finfo.isDir():
-            gVar.cwd = finfo.absoluteFilePath()
-            self.PathChangedEvent()
-            self.pathChanged.emit()
-
-    def ClickedEvent(self, event):
-        validSuffix = ['jpg', 'png']
-        index = self.selectedIndexes()[0]
-        finfo = QFileInfo(self._model.filePath(index))
-
-        if finfo.suffix().lower() not in validSuffix:
-            return
-
-        if finfo.isFile() and finfo.isReadable():
-            self.fileSelected.emit(finfo.absoluteFilePath())
-
-    def PathChangedEvent(self):
-        self._model.setRootPath(gVar.cwd)
-        self.setRootIndex(self._model.index(gVar.cwd))
-        self.selectionModel().clearSelection()
+    def RawFormatUpdatedEvent(self):
+        self.suffixChanged.emit(self.text())
 
 
 class RawPathSetBox(QGroupBox):
@@ -82,12 +51,15 @@ class RawPathSetBox(QGroupBox):
         layout0.addWidget(self.checkBox)
 
         label1 = QLabel('Suffix:')
-        input1 = QLineEdit('CR2, DNG')
+        input1 = RawFormatLineEdit()
         input1.setMinimumWidth(225)
+        gVar.rawFileSuffix = input1
+
         label2 = QLabel('Path:')
-        input2 = QLineEdit(gVar.cwd)
+        input2 = DirSelectWidget(gVar.cwd, '...')
+        gVar.rawFileDir = input2
         input2.setReadOnly(True)
-        input2.setMinimumWidth(225)
+        input2.SetSize(225, 22, 22, 22)
 
         self.suffixBox = input1
         self.rawPathBox = input2
@@ -119,14 +91,77 @@ class RawPathSetBox(QGroupBox):
             self.rawPathBox.setReadOnly(True)
 
 
+class BasicFileSystemModel(QFileSystemModel):
+    def __init__(self):
+        super().__init__()
+
+
+class FileTreeView(QTreeView):
+    _model = None
+    currentPath = None
+    baseDir = None
+
+    pathChanged = pyqtSignal(str)
+    fileSelected = pyqtSignal(str)
+
+    def __init__(self, baseDir='/'):
+        super().__init__()
+        self.baseDir = baseDir
+
+        self._model = BasicFileSystemModel()
+        self._model.setRootPath(baseDir)
+        self._model.setFilter(QDir.AllEntries | QDir.NoDot | QDir.AllDirs)
+        self._model.setNameFilterDisables(False)
+        self._model.setNameFilters(['*.jpg', '*.png'])
+
+        self.clicked.connect(self.ClickedEvent)
+
+        self.Setup()
+
+    def Setup(self):
+        self.setExpandsOnDoubleClick(False)
+        self.setIconSize(QSize(12, 12))
+        self.setModel(self._model)
+        self.setHeaderHidden(True)
+        header = self.header()
+        for i in range(1, header.count()):
+            header.hideSection(i)
+        self.setRootIndex(self._model.index(self.baseDir))
+
+    def mouseDoubleClickEvent(self, event):
+        index = self.selectedIndexes()[0]
+        finfo = QFileInfo(self._model.filePath(index))
+        if finfo.isDir():
+            self.baseDir = finfo.absoluteFilePath()
+            self.PathChangedEvent(self.baseDir)
+            self.pathChanged.emit(self.baseDir)
+
+    def ClickedEvent(self, event):
+        validSuffix = ['jpg', 'png']
+        index = self.selectedIndexes()[0]
+        finfo = QFileInfo(self._model.filePath(index))
+
+        if finfo.suffix().lower() not in validSuffix:
+            return
+
+        if finfo.isFile() and finfo.isReadable():
+            self.fileSelected.emit(finfo.absoluteFilePath())
+
+    def PathChangedEvent(self, path):
+        self.baseDir = path
+        self._model.setRootPath(path)
+        self.setRootIndex(self._model.index(path))
+        self.selectionModel().clearSelection()
+
+
 class FileExlpore(QGroupBox):
     layout = None
     fileTreeView = None
 
-    pathChanged = pyqtSignal()
+    pathChanged = pyqtSignal(str)
     fileSelected = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, baseDir='/'):
         super().__init__('File')
         gVar.fileExplorePathChangeEvent = self.PathChangedEvent
         gVar.fileExplore = self
@@ -135,9 +170,9 @@ class FileExlpore(QGroupBox):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(5,10,5,10);
 
-        self.fileTreeView = FileTreeView()
+        self.fileTreeView = FileTreeView(baseDir)
 
-        self.fileTreeView.pathChanged.connect(lambda : self.pathChanged.emit())
+        self.fileTreeView.pathChanged.connect(lambda x: self.pathChanged.emit(x))
         self.fileTreeView.fileSelected.connect(lambda x: self.fileSelected.emit(x))
 
         self.layout.addWidget(self.fileTreeView)
@@ -147,10 +182,10 @@ class FileExlpore(QGroupBox):
     def Setup(self):
         self.setLayout(self.layout)
         self.setMaximumHeight(300)
-        self.setStyleSheet('padding-top: 15px')
 
-    def PathChangedEvent(self):
-        self.fileTreeView.PathChangedEvent()
+    def PathChangedEvent(self, path):
+        gVar.cwd = path
+        self.fileTreeView.PathChangedEvent(path)
 
 
 class BasicOperationPanel(QWidget):
@@ -166,7 +201,7 @@ class BasicOperationPanel(QWidget):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(8,8,8,8);
 
-        self.fileExplore = FileExlpore()
+        self.fileExplore = FileExlpore(gVar.cwd)
         self.rawPathSetBox = RawPathSetBox()
 
         lineWidget = QWidget()
@@ -176,6 +211,7 @@ class BasicOperationPanel(QWidget):
         lineWidget.setContentsMargins(0,0,0,0)
 
         self.layout.addWidget(self.fileExplore)
+        self.layout.addSpacing(6)
         self.layout.addWidget(lineWidget)
         self.layout.addWidget(self.rawPathSetBox)
         self.layout.addStretch()

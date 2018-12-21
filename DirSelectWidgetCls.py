@@ -11,104 +11,128 @@ class DirSelectDialog(QFileDialog):
         super().__init__()
 
 class LineEdit(QLineEdit):
+    curText = None
     pathChanged = pyqtSignal(str)
+    fileFilter = None
 
     def __init__(self, currentPath):
         super().__init__(currentPath)
+        self.curText = currentPath
         self.returnPressed.connect(self.ReturnPressed)
-        gVar.workDirPathInputBoxPathChangeEvent = self.PathChangedEvent
+        self.fileFilter = self.defaultFileFilter
 
         self.setFrame(True)
         self.setMaximumHeight(26)
         self.setMinimumHeight(26)
 
+    def setFileFilter(self, flt):
+        self.fileFilter = flt
+
+    def defaultFileFilter(self, finfo):
+        if finfo.isDir() and finfo.exists():
+            return True
+        return False
+
     def ReturnPressed(self):
         finfo = QFileInfo(self.text())
-        if finfo.isDir() and finfo.exists():
-            gVar.cwd = finfo.absoluteFilePath()
-            self.pathChanged.emit(self.text())
+        if self.fileFilter(finfo):
+            self.curText = self.text()
+            self.pathChanged.emit(self.curText)
         else:
             self.setStyleSheet('color: red')
 
     def keyPressEvent(self, event):
         self.setStyleSheet('color: rgb(235,235,235)');
         if event.key() == Qt.Key_Escape:
-            self.setText(gVar.cwd)
+            self.setText(self.curText)
         else:
             super().keyPressEvent(event)
 
     def focusOutEvent(self, event):
-        self.setText(gVar.cwd)
+        self.setText(self.curText)
         self.setStyleSheet('color: rgb(235,235,235)');
 
-    def PathChangedEvent(self):
-        self.setText(gVar.cwd)
+    def PathChangedEvent(self, path):
+        self.curText = path
+        self.setText(path)
 
 class OpenDirBtn(QWidget):
-    pathChanged = pyqtSignal()
+    pathChanged = pyqtSignal(str)
+    btn = None
+    curPath = None
 
-    def __init__(self):
+    def __init__(self, buttonText, baseDir='/'):
         super().__init__()
+        self.curPath = baseDir
 
         self.layout = QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
-        btn = QPushButton('Open')
-        btn.setStyleSheet('width: 50px; height: 22px;')
-        btn.clicked.connect(self.OpenDialog)
+        self.btn = QPushButton(buttonText)
+        self.btn.setStyleSheet('width: 50px; height: 22px;')
+        self.btn.clicked.connect(self.OpenDialog)
 
-        self.layout.addWidget(btn)
+        self.layout.addWidget(self.btn)
 
         self.setLayout(self.layout)
 
     def OpenDialog(self):
         options = QFileDialog.Options()
         options = QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
-        gVar.cwd = QFileDialog.getExistingDirectory(self, 'Open Folder',
-                gVar.cwd, options)
-        self.pathChanged.emit()
+        self.curPath = QFileDialog.getExistingDirectory(self, 'Open Folder',
+                       self.curPath, options)
+        self.pathChanged.emit(self.curPath)
 
 
 class DirSelectWidget(QWidget):
-    inputBox = None;
+    lineEdit = None;
     dirSelectDialogBtn = None
 
-    pathChanged = pyqtSignal()
+    pathChanged = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, baseDir='/', btnText='Open'):
         super().__init__()
-        gVar.workDirPathBox = self
 
         self.layout = QHBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0);
 
-        self.dirSelectDialogBtn = OpenDirBtn()
+        self.dirSelectDialogBtn = OpenDirBtn(btnText, baseDir)
+        self.lineEdit = LineEdit(baseDir)
 
-        self.inputBox = LineEdit(gVar.cwd)
-
+        self.layout.addWidget(self.lineEdit, 0, Qt.AlignLeft)
         self.layout.addSpacing(10)
-        self.layout.addWidget(self.inputBox, 0, Qt.AlignHCenter)
-        self.layout.addSpacing(10)
-        self.layout.addWidget(self.dirSelectDialogBtn, 0, Qt.AlignHCenter)
-        self.layout.addSpacing(10)
+        self.layout.addWidget(self.dirSelectDialogBtn, 0, Qt.AlignRight)
 
         self.dirSelectDialogBtn.pathChanged.connect(self.PathChangedEvent)
-        self.dirSelectDialogBtn.pathChanged.connect(lambda : self.pathChanged.emit())
-        self.inputBox.pathChanged.connect(self.PathChangedEvent)
-        self.inputBox.pathChanged.connect(lambda : self.pathChanged.emit())
+        self.lineEdit.pathChanged.connect(self.PathChangedEvent)
 
         self.Setup()
 
     def Setup(self):
         self.setLayout(self.layout)
         self.setStyleSheet('QWidget { height: 36px; }')
-        self.setMinimumWidth(400)
-        self.setMaximumWidth(400)
 
-    def PathChangedEvent(self):
-        self.inputBox.PathChangedEvent()
+    def PathChangedEvent(self, path):
+        self.lineEdit.PathChangedEvent(path)
+        self.pathChanged.emit(path)
 
+    def SetSize(self, totalW, totalH, btnW, btnH):
+        self.setMinimumWidth(totalW)
+        self.setMaximumWidth(totalW)
+        self.setMinimumHeight(totalH)
+        self.setMaximumHeight(totalH)
+        self.lineEdit.setMinimumWidth(totalW - btnW - 10)
+        self.lineEdit.setMaximumWidth(totalW - btnW - 10)
+        self.lineEdit.setMinimumHeight(totalH)
+        self.lineEdit.setMaximumHeight(totalH)
+        self.dirSelectDialogBtn.btn.setStyleSheet('width: {}px; height: {}px'.format(btnW,btnH))
+
+    def setReadOnly(self, state):
+        self.lineEdit.setReadOnly(state)
+
+    def text(self):
+        return self.lineEdit.text()
 
 
